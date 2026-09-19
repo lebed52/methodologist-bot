@@ -110,11 +110,23 @@ class MethodologistBot:
         if update.effective_message:
             await _reply_with_retry(
                 update.effective_message,
-                "Доступ к демо открывается после подписки на @qabigtech.\n\n"
-                "Подпишитесь на канал и нажмите «Проверить подписку».",
+                "Доступ к боту открывается после подписки на канал.\n\n"
+                "Подпишитесь и нажмите «Проверить подписку и получить ссылку».",
                 reply_markup=self.subscription_keyboard(),
             )
         return False
+
+    def repository_request_keyboard(self) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Получить ссылку на репозиторий",
+                        callback_data="unlock_repository",
+                    )
+                ]
+            ]
+        )
 
     def subscription_keyboard(self) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
@@ -127,8 +139,8 @@ class MethodologistBot:
                 ],
                 [
                     InlineKeyboardButton(
-                        "Начать работу",
-                        callback_data="check_subscription",
+                        "Проверить подписку и получить ссылку",
+                        callback_data="unlock_repository",
                     )
                 ],
             ]
@@ -145,29 +157,16 @@ class MethodologistBot:
         if not self.allowed(update):
             await self.deny(update)
             return
-        has_subscription = await self.subscribed(update, context)
         caption = (
             "Демонстрационный бот к докладу Сергея Лебедева на SQA Days.\n\n"
-            "Я Борис, Дух методолога. Показываю, как банк памяти и методический "
-            "скилл превращают обычный AI-чат в наставника по конкретному проекту."
+            "Я Борис, Дух методолога. Это open-source пример AI-наставника, "
+            "который отвечает по материалам конкретного проекта, помогает "
+            "обучать команду и разбирает практические задачи.\n\n"
+            "Бота можно забрать, заменить его память и skills своими файлами "
+            "и запустить для курса, onboarding или внутренней базы знаний.\n\n"
+            "Хотите получить код и инструкцию по настройке? Нажмите кнопку ниже."
         )
-        reply_markup = (
-            self.subscription_keyboard() if self.settings.required_channel else None
-        )
-        if self.settings.required_channel:
-            caption += (
-                "\n\nЧтобы начать работу, подпишитесь на Telegram-канал "
-                f"{self.settings.required_channel} и нажмите «Начать работу»."
-            )
-        if has_subscription:
-            caption += (
-                "\n\nСейчас внутри демонстрационные материалы. Спросите: "
-                "«Расскажи о проекте», «С чего начать обучение?» или "
-                "«Дай практическое задание».\n\n"
-                "/new — очистить историю диалога\n"
-                "/reload — перечитать memory и skills\n"
-                "/status — показать модель и число файлов"
-            )
+        reply_markup = self.repository_request_keyboard()
         if START_COVER_PATH.exists():
             await _reply_photo_with_retry(
                 update.effective_message,
@@ -182,7 +181,7 @@ class MethodologistBot:
                 reply_markup=reply_markup,
             )
 
-    async def check_subscription(
+    async def unlock_repository(
         self,
         update: Update,
         context: ContextTypes.DEFAULT_TYPE,
@@ -231,8 +230,11 @@ class MethodologistBot:
             )
             return
         await query.answer(
-            "Подписка пока не найдена. Подпишитесь и попробуйте ещё раз.",
+            "Вы ещё не подписаны. Подпишитесь на канал и повторите проверку.",
             show_alert=True,
+        )
+        await query.edit_message_reply_markup(
+            reply_markup=self.subscription_keyboard(),
         )
 
     async def new_dialog(
@@ -451,8 +453,8 @@ def main() -> None:
     application.add_handler(CommandHandler("status", bot.status))
     application.add_handler(
         CallbackQueryHandler(
-            bot.check_subscription,
-            pattern=r"^check_subscription$",
+            bot.unlock_repository,
+            pattern=r"^unlock_repository$",
         )
     )
     application.add_handler(
