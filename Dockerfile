@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
 COPY memory ./memory
 COPY skills ./skills
-COPY assets ./assets
 
 RUN mkdir -p /app/data
 

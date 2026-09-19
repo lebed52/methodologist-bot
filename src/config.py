@@ -60,8 +60,6 @@ def load_settings() -> Settings:
         max_history_messages=max(2, int(os.getenv("MAX_HISTORY_MESSAGES", "12"))),
         max_context_chars=max(4_000, int(os.getenv("MAX_CONTEXT_CHARS", "30000"))),
         allowed_user_ids=_parse_user_ids(os.getenv("ALLOWED_USER_IDS", "")),
-        required_channel=os.getenv("REQUIRED_CHANNEL", "@qabigtech").strip(),
-        required_channel_url=os.getenv(
-            "REQUIRED_CHANNEL_URL", "https://t.me/qabigtech"
-        ).strip(),
+        required_channel=os.getenv("REQUIRED_CHANNEL", "").strip(),
+        required_channel_url=os.getenv("REQUIRED_CHANNEL_URL", "").strip(),
     )

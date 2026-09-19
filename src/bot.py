@@ -29,6 +29,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 START_COVER_PATH = Path(__file__).resolve().parent.parent / "assets/start-cover.png"
+REPOSITORY_URL = "https://github.com/lebed52/methodologist-bot"
 
 
 class MethodologistBot:
@@ -120,13 +121,13 @@ class MethodologistBot:
             [
                 [
                     InlineKeyboardButton(
-                        "Подписаться на @qabigtech",
+                        f"Подписаться на {self.settings.required_channel}",
                         url=self.settings.required_channel_url,
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        "Проверить подписку",
+                        "Начать работу",
                         callback_data="check_subscription",
                     )
                 ],
@@ -150,7 +151,14 @@ class MethodologistBot:
             "Я Борис, Дух методолога. Показываю, как банк памяти и методический "
             "скилл превращают обычный AI-чат в наставника по конкретному проекту."
         )
-        reply_markup = None
+        reply_markup = (
+            self.subscription_keyboard() if self.settings.required_channel else None
+        )
+        if self.settings.required_channel:
+            caption += (
+                "\n\nЧтобы начать работу, подпишитесь на Telegram-канал "
+                f"{self.settings.required_channel} и нажмите «Начать работу»."
+            )
         if has_subscription:
             caption += (
                 "\n\nСейчас внутри демонстрационные материалы. Спросите: "
@@ -160,12 +168,6 @@ class MethodologistBot:
                 "/reload — перечитать memory и skills\n"
                 "/status — показать модель и число файлов"
             )
-        else:
-            caption += (
-                "\n\nДоступ открывается после подписки на Telegram-канал "
-                "@qabigtech. Подпишитесь и нажмите кнопку проверки."
-            )
-            reply_markup = self.subscription_keyboard()
         if START_COVER_PATH.exists():
             await _reply_photo_with_retry(
                 update.effective_message,
@@ -196,8 +198,36 @@ class MethodologistBot:
             await query.edit_message_reply_markup(reply_markup=None)
             await _reply_with_retry(
                 query.message,
-                "Подписка подтверждена. Борис на связи.\n\n"
-                "Напишите: «Расскажи о проекте» или «С чего начать обучение?»",
+                "Подписка подтверждена. Доступ открыт.\n\n"
+                "Что это за проект\n"
+                "«Дух методолога» — open-source Telegram-бот, который отвечает "
+                "по материалам конкретного проекта и помогает учиться на реальных "
+                "задачах. GPT-5 работает через Polza.ai, а знания и поведение "
+                "лежат в обычных Markdown-файлах.\n\n"
+                "Где применять\n"
+                "• onboarding новых сотрудников;\n"
+                "• внутреннее обучение команды;\n"
+                "• курс или учебный проект;\n"
+                "• база знаний с AI-наставником.\n\n"
+                "Как запустить у себя\n"
+                "1. Клонируйте репозиторий.\n"
+                "2. Создайте бота через BotFather.\n"
+                "3. Добавьте ключ Polza.ai в .env.\n"
+                "4. Замените файлы в memory/ и skills/ материалами своего проекта.\n"
+                "5. Запустите python -m src.bot или Docker Compose.\n\n"
+                f"Код и полная инструкция:\n{REPOSITORY_URL}\n\n"
+                "Для демонстрации напишите: «Расскажи о проекте» или "
+                "«Дай практическое задание».",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Открыть репозиторий",
+                                url=REPOSITORY_URL,
+                            )
+                        ]
+                    ]
+                ),
             )
             return
         await query.answer(
