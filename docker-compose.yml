@@ -1,0 +1,9 @@
+services:
+  methodologist-bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./memory:/app/memory:ro
+      - ./skills:/app/skills:ro
+      - ./data:/app/data
